@@ -32,11 +32,11 @@ impl GameBoyMEM {
     GameBoyMEM {memory : [0; 65536],}
     }
 
-    pub fn write_to_addr(&mut self, val : u8, addr : u8){
+    pub fn write_to_addr(&mut self, val : u8, addr : u16){
         self.memory[addr as usize] = val;
     }
 
-    pub fn chain_write(&mut self, val : Vec<u8>, start_addr : u8)  {
+    pub fn chain_write(&mut self, val : Vec<u16>, start_addr : u8)  {
         let mut i  = start_addr;
         for value in val {
             self.memory[i] = value;
@@ -44,7 +44,7 @@ impl GameBoyMEM {
         }
     }
 
-    pub fn read_at_addr(&mut self, addr : u8) -> u8 {
+    pub fn read_at_addr(&mut self, addr : u16) -> u8 {
         self.memory[addr as usize] 
 
     }
