@@ -5,7 +5,7 @@ mod cpu;
 mod gb;
 use mem::GameBoyMEM;
 use cpu::CPU;
-use gb::{Instr, match_instr, LoadRegInstr, ArithInstr};
+use gb::{Instr, match_instr, LoadRegInstr, ArithInstr, GB};
 
 use std::os::unix::fs::FileExt;
 
@@ -20,9 +20,9 @@ fn load_bootROM(gameboy : &mut GB) {
 
 
     //first set up Instruction objects
-    let mut anom_instr = Instr{ };
-    let mut load_instr = LoadRegInstr{};
-    let mut arith_instr = ArithInstr{};
+    let mut anom_instr = Instr::new();
+    let mut load_instr = LoadRegInstr::new();
+    let mut arith_instr = ArithInstr::new();
     let mut opcode : u8 = 0;
 
     //start the loop
@@ -44,15 +44,9 @@ fn main() {
 
     //initialize Gameboy obj
     let mut OurBoi = &GB { cpu : CPU::new(), mem : GameBoyMEM::new()};
-    //initialize instruction template
-    let mut instr_template = &Instr{ CPU_cycles : 0,
-                                            op_type : " ".to_string(),
-                                            opcode : 0,
-                                            src_addr : 0,
-                                            target_addr : 0,
-                                            immm : 0,
-                                            pc_incr : 0,
-                                    };
+    //initialize instruction templates
+   
+
     //first load bootrom
     load_bootROM(&mut OurBoi);
 
