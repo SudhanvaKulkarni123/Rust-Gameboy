@@ -33,6 +33,11 @@ pub struct Instr {
     imm : u16,
     pc_incr : u8,
     pub uses_imm : bool,
+    Zf : bool,
+    Nf : bool,
+    Hf : bool,
+    Cf : bool,
+
 
 }
 impl Instr {
@@ -48,6 +53,11 @@ impl Instr {
                 imm: 0,
                 pc_incr: 0,
                 uses_imm: false,
+                Zf : false,
+                Nf : false,
+                Hf : false,
+                Cf : false,
+
             }
         }
     }
@@ -58,7 +68,8 @@ pub struct LoadRegInstr {
     dst_reg : String,
     imm : u16,
     imm_length : u8,
-    op_type : String
+    op_type : String,
+    pc_incr : u8,
 
 }
 impl LoadRegInstr {
@@ -71,6 +82,7 @@ impl LoadRegInstr {
                 imm: 0,
                 imm_length: 0,
                 op_type: String::new(),
+                pc_incr : 0,
             }
         }
     }
@@ -81,7 +93,11 @@ pub struct ArithInstr {
     src_reg : String,
     dst_reg : String,
     imm : u16,
-    imm_length : u8,
+    imm_length : u8, 
+    Zf : bool,
+    Nf : bool,
+    Hf : bool,
+    Cf : bool,
 }
 
 impl ArithInstr {
@@ -93,6 +109,10 @@ impl ArithInstr {
                 dst_reg: String::new(),
                 imm: 0,
                 imm_length: 0,
+                Zf : false,
+                Nf : false,
+                Hf : false,
+                Cf : false,
             }
         }
     }
@@ -140,7 +160,7 @@ impl ExecInstr for LoadRegInstr {
                                 }
                                 
                         }
-                }
+                },
                 String::from("LD n,A") => {
                         match self.src_reg {
                                 String::from("use_imm") => {gb.mem.write_to_addr(gb.cpu.read_from(self.src_reg), self.imm);},
@@ -149,12 +169,50 @@ impl ExecInstr for LoadRegInstr {
                                 String::from("de") => {gb.mem.write_to_addr(gb.cpu.read_from(self.src_reg), gb.cpu.de());},
                                 _ => {gb.cpu.write_to(self.dst_reg, gb.cpu.read_from(self.src_reg));},
                         }
+                },
+                String::from("LD A,(*)") => {
+                        if !self.uses_imm {
+                                gb.cpu.write_to(self.dst_reg, gb.mem.read_at_addr(0xFF00 + gb.cpu.read_from(self.src_reg)));
+                        } else {
+                                gb.cpu.write_to(self.dst_reg, gb.mem.read_at_addr(0xFF00 + self.imm));
+                        }
+                },
+                String::from("LD (*),A") => {
+                        if !self.uses_imm {
+                                gb.mem.write_to_addr(gb.cpu.read_from(self.src_reg), 0xFF00 + gb.cpu.read_from(self.dst_reg));
+                        } else {
+                                gb.mem.write_to_addr(gb.cpu.read_from(self.src_reg), 0xFF00 + self.imm);
+                        }
+                },
+                String::from("LDD A,(HL)") => {
+                        gb.cpu.write_to(self.src_reg, gb.mem.read_at_addr(gb.cpu.hl()));
+                        gb.cpu.dec_hl();
+                },
+                String::from("LDD (HL),A") => {
+                        gb.mem.write_to_addr(gb.cpu.read_from(self.dst_reg), gb.cpu.hl());
+                        gb.cpu.dec_hl();
                 }
-                String::from("")
+                String::from("LDI A,(HL)") => {
+                        gb.cpu.write_to(self.src_reg, gb.mem.read_at_addr(gb.cpu.hl()));
+                        gb.cpu.inc_hl();
+                },
+                String::from("LDI (HL),A") => {
+                        gb.mem.write_to_addr(gb.cpu.read_from(self.dst_reg), gb.cpu.hl());
+                        gb.cpu.inc_hl();
+                },
+                String::from("LD n,nn") => {
+                        gb.cpu.set16reg(self.dst_reg, self.imm);
+                },
+                String::from("LD SP,HL") => {
+                        gb.cpu.set16reg(self.dst_reg, gb.cpu.hl());
+                },
+
+
 
         }
+        gb.cpu.num_cycles = gb.cpu.num_cycles + self.CPU_cycles;
+        gb.cpu.pc = gb.cpu.pc + self.pc_incr;
        
-
         
     }
     fn set_regs(&mut self, src : String, dst : String) {
@@ -178,6 +236,7 @@ impl ExecInstr for LoadRegInstr {
         
     }
     fn set_locs(&mut self, src : u16, dst : u16) {
+        //not used
     }
     fn set_name(&mut self, name: String) {
         self.op_type = name;
@@ -198,12 +257,9 @@ impl ExecInstr for Instr {
 
         gameboy.cpu.pc = gameboy.cpu.pc  + self.pc_incr;
 
-
-
     }
     fn set_cputime(&mut self, num_cycles : u8) {
         self.CPU_cycles = num_cycles;
-        
     }
     fn set_imm(&mut self, imm_size : u8, gameboy : &mut GB) {
         if imm_size == 0 {Ok(())}

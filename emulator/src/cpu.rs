@@ -99,6 +99,39 @@ impl CPU {
     pub fn de(&mut self) -> u16 {
         self.d << 8 + self.e
     }
+    pub fn sp(&self) -> u16 {
+        self.sp
+    }
+
+    pub fn set_hl(&mut self, val : u16) {
+        self.h = val >> 8;
+        self.l = val & 0xFF; 
+    }
+    pub fn set_bc(&mut self, val : u16) {
+        self.b = val >> 8;
+        self.c = val & 0xFF;
+    }
+    pub fn set_de(&mut self, val : u16) {
+        self.d = val >> 8;
+        self.c = val & 0xFF;
+    }
+
+    pub fn set_sp(&mut self, val : u16) {
+        self.sp = val;
+    }
+
+    pub fn dec_hl(&mut self) {
+        let mut hl = self.hl();
+        hl = hl - 1;
+        self.h = hl >> 8;
+        self.l = hl & 0x0F;
+    }
+    pub fn inc_hl(&mut self) {
+        let mut hl = self.hl();
+        hl = hl + 1;
+        self.h = hl >> 8;
+        self.l = hl & 0xFF;
+    }
     
 
 
