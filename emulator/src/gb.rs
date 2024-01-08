@@ -3,6 +3,11 @@ use crate::mem::GameBoyMEM;
 use crate::cpu::CPU;
 
 
+
+enum instructions {
+
+}
+
 pub struct GB {
     pub cpu : CPU,
     pub mem : GameBoyMEM
@@ -98,6 +103,7 @@ pub struct ArithInstr {
     Nf : bool,
     Hf : bool,
     Cf : bool,
+    op_type : String,
 }
 
 impl ArithInstr {
@@ -113,6 +119,7 @@ impl ArithInstr {
                 Nf : false,
                 Hf : false,
                 Cf : false,
+                op_type :String::new();
             }
         }
     }
@@ -290,17 +297,33 @@ impl ExecInstr for Instr {
 }
 
 //traits for load register instructions
-impl ExecInstr for LoadRegInstr {
-    fn execute(&self) {
-        
+impl ExecInstr for ArithInstr {
+    fn execute(&self, gameboy : &mut GB) {
+        match self.op_type {
+                String::from("a+b")  => {},
+                String::from("a-b") => {},
+                String::from("a++") => {},
+                String::from("a--") => {},
+        }
     }
     fn set_cputime(&mut self, num_cycles : u8) {
+        self.CPU_cycles = num_cycles;
         
     }
-    fn set_imm(&mut self, imm_size : u8) {
+    fn set_imm(&mut self, imm_size : u8, gameboy : &mut GB) {
+        if imm_size == 0 { }
+        if imm_size == 8 {
+                self.imm = gameboy.mem.read_at_addr(gameboy.cpu.pc + 1) as u16
+        }
+        if imm_size == 16 {
+                self.imm = ((gameboy.mem.read_at_addr(gameboy.cpu.pc + 2) as u16) << 8) + (gameboy.mem.read_at_addr(gameboy.cpu.pc + 1) as u16)
+        }
+
         
     }
     fn set_regs(&mut self, src : String, dst : String) {
+        self.dst_reg = dst;
+        self.src_reg = src;
         
     }
     fn set_locs(&mut self, src : u16, dst : u16) {
@@ -313,7 +336,7 @@ impl ExecInstr for LoadRegInstr {
 }
 
 //not to happy about this design choice of multiple instruction structs. Will have to review it later
-pub fn match_instr(&mut gb : GB, opcode : u8, instr : &mut Instr, load_instr : &mut LoadRegInstr, arith : &mut ArithInstr) -> u8 {
+pub fn match_instr(mut gb : GB, opcode : u8, instr : &mut Instr, load_instr : &mut LoadRegInstr, arith : &mut ArithInstr) {
     match opcode {
         0x00 => {},
         0x01 => {},
@@ -412,7 +435,12 @@ pub fn match_instr(&mut gb : GB, opcode : u8, instr : &mut Instr, load_instr : &
         0x33 => {},
         0x34 => {},
         0x35 => {},
-        0x36 => {},
+        0x36 => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::new(), String::from("hl"));
+                load_instr.uses_imm = true;
+                load_instr.set_imm(8, gb);
+                load_instr.execute(gb);
+                load_instr.pc_incr = 3;},
         0x37 => {},
         0x38 => {},
         0x39 => {},
@@ -531,36 +559,144 @@ pub fn match_instr(&mut gb : GB, opcode : u8, instr : &mut Instr, load_instr : &
                 load_instr.pc_incr = 1;
                 load_instr.execute(gb);},
         0x57 => {},
-        0x58 => {},
-        0x59 => {},
-        0x5A => {},
-        0x5B => {},
-        0x5C => {},
-        0x5D => {},
-        0x5E => {},
+        0x58 => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("b"), String::from("e"));
+                load_instr.set_cputime(4);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
+        0x59 => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("c"), String::from("e"));
+                load_instr.set_cputime(4);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
+        0x5A => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("d"), String::from("e"));
+                load_instr.set_cputime(4);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
+        0x5B => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("e"), String::from("e"));
+                load_instr.set_cputime(4);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
+        0x5C => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("h"), String::from("e"));
+                load_instr.set_cputime(4);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
+        0x5D => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("l"), String::from("e"));
+                load_instr.set_cputime(4);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
+        0x5E => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("hl"), String::from("e"));
+                load_instr.set_cputime(8);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
         0x5F => {},
-        0x60 => {},
-        0x61 => {},
-        0x62 => {},
-        0x63 => {},
-        0x64 => {},
-        0x65 => {},
-        0x66 => {},
+        0x60 => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("b"), String::from("f"));
+                load_instr.set_cputime(4);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
+        0x61 => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("c"), String::from("f"));
+                load_instr.set_cputime(4);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
+        0x62 => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("d"), String::from("f"));
+                load_instr.set_cputime(4);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
+        0x63 => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("e"), String::from("f"));
+                load_instr.set_cputime(4);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
+        0x64 => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("h"), String::from("f"));
+                load_instr.set_cputime(4);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
+        0x65 => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("l"), String::from("f"));
+                load_instr.set_cputime(4);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
+        0x66 => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("hl"), String::from("f"));
+                load_instr.set_cputime(8);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
         0x67 => {},
-        0x68 => {},
-        0x69 => {},
-        0x6A => {},
-        0x6B => {},
-        0x6C => {},
-        0x6D => {},
-        0x6E => {},
+        0x68 => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("b"), String::from("l"));
+                load_instr.set_cputime(4);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
+        0x69 => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("c"), String::from("l"));
+                load_instr.set_cputime(4);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
+        0x6A => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("d"), String::from("l"));
+                load_instr.set_cputime(4);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
+        0x6B => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("e"), String::from("l"));
+                load_instr.set_cputime(4);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
+        0x6C => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("h"), String::from("l"));
+                load_instr.set_cputime(4);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
+        0x6D => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("l"), String::from("l"));
+                load_instr.set_cputime(4);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
+        0x6E => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("hl"), String::from("l"));
+                load_instr.set_cputime(8);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
         0x6F => {},
-        0x70 => {},
-        0x71 => {},
-        0x72 => {},
-        0x73 => {},
-        0x74 => {},
-        0x75 => {},
+        0x70 => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("b"), String::from("hl"));
+                load_instr.set_cputime(4);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
+        0x71 => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("c"), String::from("hl"));
+                load_instr.set_cputime(4);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
+        0x72 => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("d"), String::from("hl"));
+                load_instr.set_cputime(4);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
+        0x73 => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("e"), String::from("hl"));
+                load_instr.set_cputime(4);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
+        0x74 => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("h"), String::from("hl"));
+                load_instr.set_cputime(4);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
+        0x75 => {load_instr.set_name(String::from("LD r2,r1"));
+                load_instr.set_regs(String::from("l"), String::from("hl"));
+                load_instr.set_cputime(4);
+                load_instr.pc_incr = 1;
+                load_instr.execute(gb);},
         0x76 => {},
         0x77 => {},
         0x78 => {load_instr.set_name(String::from("LD r2,r1"));
@@ -738,6 +874,13 @@ pub fn match_instr(&mut gb : GB, opcode : u8, instr : &mut Instr, load_instr : &
 
     }
 }
+
+
+
+
+
+
+
 
 
 
