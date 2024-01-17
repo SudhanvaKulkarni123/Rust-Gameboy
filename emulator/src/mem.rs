@@ -36,13 +36,6 @@ impl GameBoyMEM {
         self.memory[addr as usize] = val;
     }
 
-    pub fn chain_write(&mut self, val : Vec<u16>, start_addr : u8)  {
-        let mut i  = start_addr;
-        for value in val {
-            self.memory[i] = value;
-            i = i + 1;
-        }
-    }
 
     pub fn read_at_addr(&mut self, addr : u16) -> u8 {
         self.memory[addr as usize] 
